@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from CNNmodels import ResNet, VGG, UNet
-import ViTmodels
+# import ViTmodels
 
 import image_load
 
@@ -21,6 +21,7 @@ if __name__ == '__main__':
     if args.algorithm == "ResNet":
         train_data, val_data = image_load.load_images()
         ResNet.start_procedure(train_data=train_data, validation_data=val_data)
+        
     if args.algorithm == "UNet":
         train_data, val_data = image_load.load_images(width=256,height=256)
         UNet.start_procedure(train_data=train_data, validation_data=val_data)
