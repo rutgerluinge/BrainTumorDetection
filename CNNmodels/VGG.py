@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-
 def VGG_model():
     base_model = keras.applications.VGG16(
     weights='imagenet',  # Load weights pre-trained on ImageNet.
@@ -45,16 +44,19 @@ def start_procedure(train_data, validation_data):
 
     print("---------------Start fit (training)--------------------")
     model.fit(train_data, validation_data=validation_data, epochs=20)
-    model.save_weights(filepath="./model_weights/VGG")
-    model.save(filepath = Path("./models/VGG"), overwrite=True)
+    model.save_weights(filepath="./model_weights/VGG/")
+    model.save(filepath = Path("./models/VGG/"), overwrite=True)
 
     print("---------------Start fine-tuning--------------------")
+    # load model from path, comment out if not needed
+    model = keras.models.load_model(filepath = Path("./models/VGG/"))
+    
     model.trainable = True
     
-    model.compile(optimizer=keras.optimizers.Adam(1e-5),  # Very low learning rate
+    model.compile(optimizer=keras.optimizers.Adam(1e-5),  # low learning rate
               loss=keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=[keras.metrics.BinaryAccuracy()])
     
     model.fit(train_data, validation_data=validation_data, epochs=10)
-    model.save_weights(filepath="./model_weights/VGG")
-    model.save(filepath = Path("./models/VGG"), overwrite=True)
+    model.save_weights(filepath="./model_weights/VGG/")
+    model.save(filepath = Path("./models/VGG/"), overwrite=False)
