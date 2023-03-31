@@ -1,7 +1,11 @@
 from keras.preprocessing.image import ImageDataGenerator, DirectoryIterator
 import numpy as np
+import os
+import cv2
 import pandas as pd
 from pathlib import Path
+from PIL import Image
+
 
 
 def load_images(width=244,height=244) -> {DirectoryIterator, DirectoryIterator}:
@@ -38,15 +42,28 @@ def load_images(width=244,height=244) -> {DirectoryIterator, DirectoryIterator}:
 
     return train_data_set, validation_data_set
 
-def split_input_label(dataset):
-    x = []
-    y = []
-    for x_batch, y_batch in dataset:
-        x.append(x_batch)
-        y.append(y_batch)
+def load_images_method_2():
+    folder_path = "brain_tumor_dataset"
+    no_images = os.listdir(folder_path + '/no/')
+    yes_images = os.listdir(folder_path + '/yes/')
+    dataset = []
+    labels = []
 
-    return x, y
+    for image_name in no_images:
+        image = cv2.imread(folder_path + '/no/' + image_name)
+        image = Image.fromarray(image, 'RGB')
+        image = image.resize((240, 240))
+        dataset.append(np.array(image))
+        labels.append(0)
 
+    for image_name in yes_images:
+        image = cv2.imread(folder_path + '/yes/' + image_name)
+        image = Image.fromarray(image, 'RGB')
+        image = image.resize((240, 240))
+        dataset.append(np.array(image))
+        labels.append(1)
+
+    return dataset, labels
 
 if __name__ == '__main__':
     train, test = load_images()
