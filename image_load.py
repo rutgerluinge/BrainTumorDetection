@@ -4,9 +4,8 @@ import pandas as pd
 from pathlib import Path
 
 
-def load_images() -> {DirectoryIterator, DirectoryIterator}:
-    width: int = 244
-    height: int = 244
+def load_images(width=244,height=244) -> {DirectoryIterator, DirectoryIterator}:
+
     batch_size: int = 32
 
     data_directory = Path("brain_tumor_dataset")
@@ -38,6 +37,15 @@ def load_images() -> {DirectoryIterator, DirectoryIterator}:
     )
 
     return train_data_set, validation_data_set
+
+def split_input_label(dataset):
+    x = []
+    y = []
+    for x_batch, y_batch in dataset:
+        x.append(x_batch)
+        y.append(y_batch)
+
+    return x, y
 
 
 if __name__ == '__main__':
