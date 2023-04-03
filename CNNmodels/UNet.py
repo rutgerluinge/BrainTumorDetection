@@ -7,16 +7,18 @@ from keras.optimizers import Adam
 from image_load import split_data
 
 
-def start_procedure(train_data, labels):
-    x, y, x_val, y_val = split_data(data=train_data, label=labels)
+def start_procedure(data, labels):
+    x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
 
     model = Sequential([Unet_model(),  # original U-Net model
                         Flatten(),  # flatten layer to 1d
                         Dense(1, activation='sigmoid')  # add 1 fully connected layer to output node
                         ])
-    model.summary()
+    # model.summary()
 
-    model.compile(optimizer=Adam(), loss="categorical_crossentropy", metrics=['accuracy'])
+    model.compile(optimizer=Adam(),
+                  loss="binary_crossentropy",
+                  metrics=["binary_accuracy"])
 
     print("---------------Start fit (training)--------------------")
 

@@ -117,21 +117,20 @@ def create_vit_model(transformer_layers_count):
 
 
 def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
-    x, y, x_val, y_val = split_data(data=data, label=labels)
+    x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
 
     vit_model = create_vit_model(transformer_layers)
 
     vit_model.compile(optimizer=AdamW(learning_rate=0.001, weight_decay=0.0001),
-                      loss=SparseCategoricalCrossentropy(from_logits=True),
-                      metrics=[SparseCategoricalAccuracy(name="accuracy")])
+                      loss="binary_crossentropy",
+                      metrics=["binary_accuracy"])
 
     # no callbacks for now
 
     result = vit_model.fit(x=x, y=y,
                            batch_size=256,
                            epochs=100,
-                           validation_data=(x_val, y_val)
-                           )
+                           validation_data=(x_val, y_val))
 
     vit_model.save_weights(f"{name}_weights")
     vit_model.save(f"saved_models/{name}", overwrite=True)
