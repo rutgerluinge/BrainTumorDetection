@@ -6,8 +6,9 @@ import numpy as np
 ##create patches from original image
 from keras.dtensor.optimizers import AdamW
 from keras.losses import SparseCategoricalCrossentropy
-from keras.metrics import SparseTopKCategoricalAccuracy, SparseCategoricalAccuracy
-from keras.optimizers import Adam
+from keras.metrics import SparseCategoricalAccuracy
+
+from image_load import split_data
 
 
 class Patches(layers.Layer):
@@ -115,24 +116,10 @@ def create_vit_model(transformer_layers_count):
     return model
 
 
-def split_data(data, label):
-    _70_idx = int(len(data) * 0.7)
-    _90_idx = int(len(data) * 0.9)
-
-    x_train = data[:_70_idx]
-    y_train = label[:_70_idx]
-
-    x_validate = data[_70_idx:_90_idx]
-    y_validate = label[_70_idx:_90_idx]
-
-    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate)
-
-
-def start_procedure(train_data, train_label, transformer_layers = 12, name="ViTL16"):
-    x, y, x_val, y_val = split_data(data=train_data, label=train_label)
+def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
+    x, y, x_val, y_val = split_data(data=data, label=labels)
 
     vit_model = create_vit_model(transformer_layers)
-    #vit_model.summary()
 
     vit_model.compile(optimizer=AdamW(learning_rate=0.001, weight_decay=0.0001),
                       loss=SparseCategoricalCrossentropy(from_logits=True),
@@ -140,10 +127,11 @@ def start_procedure(train_data, train_label, transformer_layers = 12, name="ViTL
 
     # no callbacks for now
 
-    vit_model.fit(x=x, y=y,
-                  batch_size=256,
-                  epochs=100,
-                  validation_data=(x_val, y_val)
-                  )
+    result = vit_model.fit(x=x, y=y,
+                           batch_size=256,
+                           epochs=100,
+                           validation_data=(x_val, y_val)
+                           )
 
+    vit_model.save_weights(f"{name}_weights")
     vit_model.save(f"saved_models/{name}", overwrite=True)

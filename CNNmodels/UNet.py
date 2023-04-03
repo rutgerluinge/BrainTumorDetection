@@ -4,24 +4,33 @@ from keras import Input, Model, Sequential
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, concatenate, Rescaling, Flatten, Dense, Activation
 from keras.optimizers import Adam
 
-def start_procedure(train_data, validation_data):
+from image_load import split_data
 
-    model = Sequential([Unet_model(),                   #original U-Net model
-                        Flatten(),                      #flatten layer to 1d
-                        Dense(1, activation='sigmoid')  #add 1 fully connected layer to output node
+
+def start_procedure(train_data, labels):
+    x, y, x_val, y_val = split_data(data=train_data, label=labels)
+
+    model = Sequential([Unet_model(),  # original U-Net model
+                        Flatten(),  # flatten layer to 1d
+                        Dense(1, activation='sigmoid')  # add 1 fully connected layer to output node
                         ])
     model.summary()
 
-    model.compile(optimizer=Adam(learning_rate=0.1), loss="binary_crossentropy", metrics=['binary_accuracy'])
+    model.compile(optimizer=Adam(), loss="categorical_crossentropy", metrics=['accuracy'])
 
     print("---------------Start fit (training)--------------------")
-    model.fit(train_data, validation_data=validation_data, epochs=100)
-    model.save_weights(filepath="model_weights")
-    model.save(filepath=Path("brain_tumor_dataset"), overwrite=True)
+
+    result = model.fit(x=x, y=y,
+                       batch_size=32,
+                       epochs=100,
+                       validation_data=(x_val, y_val)
+                       )
+
+    model.save_weights(filepath="model_weights_unet")
+    model.save(filepath="saved_models/Unet", overwrite=True)
 
 
 def Unet_model():
-
     def encode(input_layer, filters):
         """2 convolutions + 1 max pool (2x2)"""
         conv_1 = Conv2D(filters, 3, activation="relu", padding="same")(input_layer)
@@ -56,4 +65,3 @@ def Unet_model():
     output = Conv2D(1, 1, activation='sigmoid', name="output")(d1)
 
     return Model(inputs, output, name="U-Net")
-

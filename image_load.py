@@ -68,5 +68,17 @@ def load_images_method_2():
 
     return dataset, labels
 
+def split_data(data, label):
+    _70_idx = int(len(data) * 0.7)
+    _90_idx = int(len(data) * 0.9)
+
+    x_train = data[:_70_idx]
+    y_train = label[:_70_idx]
+
+    x_validate = data[_70_idx:_90_idx]
+    y_validate = label[_70_idx:_90_idx]
+
+    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate)
+
 if __name__ == '__main__':
     train, test = load_images()
