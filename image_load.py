@@ -40,7 +40,7 @@ def load_images(width=256, height=256) -> {DirectoryIterator, DirectoryIterator}
     return train_data_set, validation_data_set
 
 
-def load_images_method_2(image_input_size=256):
+def load_images_method_2(image_input_size=242):
     """simple to understand method to load the data into 2 lists (np.array): data, labels"""
     folder_path = "brain_tumor_dataset"
     no_images = os.listdir(folder_path + '/no/')
@@ -97,7 +97,6 @@ def data_augmentation(data, label):
         @:returns new data and labels with more data (augmented) by rotation.
         @: rotation/mirror
     """
+    pass
 
 
-if __name__ == '__main__':
-    train, test = load_images()
