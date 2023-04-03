@@ -70,6 +70,7 @@ def mlp(x, hidden_units, dropout_rate):
 
 
 def create_vit_model(transformer_layers_count):
+    """vit start"""
     patch_nr = 16
     total_amount_patches = patch_nr * patch_nr
     patch_size = 240 / patch_nr
