@@ -1,15 +1,16 @@
 from keras.preprocessing.image import ImageDataGenerator, DirectoryIterator
 import numpy as np
+import os
+import cv2
 import pandas as pd
 from pathlib import Path
+from PIL import Image
 
 
-def load_images(width=244,height=244) -> {DirectoryIterator, DirectoryIterator}:
-
+def load_images(width=256, height=256) -> {DirectoryIterator, DirectoryIterator}:
     batch_size: int = 32
 
     data_directory = Path("brain_tumor_dataset")
-    print(data_directory)
 
     data_generator = ImageDataGenerator(
         rescale=1. / 255.,
@@ -38,15 +39,64 @@ def load_images(width=244,height=244) -> {DirectoryIterator, DirectoryIterator}:
 
     return train_data_set, validation_data_set
 
-def split_input_label(dataset):
-    x = []
-    y = []
-    for x_batch, y_batch in dataset:
-        x.append(x_batch)
-        y.append(y_batch)
 
-    return x, y
+def load_images_method_2(image_input_size=242):
+    """simple to understand method to load the data into 2 lists (np.array): data, labels"""
+    folder_path = "brain_tumor_dataset"
+    no_images = os.listdir(folder_path + '/no/')
+    yes_images = os.listdir(folder_path + '/yes/')
+    dataset = []
+    labels = []
+
+    for image_name in no_images:
+        image = cv2.imread(folder_path + '/no/' + image_name)
+        image = Image.fromarray(image, 'RGB')
+        image = image.resize((image_input_size, image_input_size))
+        dataset.append(np.array(image))
+        labels.append(0)
+
+    for image_name in yes_images:
+        image = cv2.imread(folder_path + '/yes/' + image_name)
+        image = Image.fromarray(image, 'RGB')
+        image = image.resize((image_input_size, image_input_size))
+        dataset.append(np.array(image))
+        labels.append(1)
+
+    return np.array(dataset), np.array(labels)
 
 
-if __name__ == '__main__':
-    train, test = load_images()
+def split_data(data, label):
+    """ split data into train/validation/test data:
+        70/20/10
+        @TODO currently only returns train and validation sets!!!!"""
+    _70_idx = int(len(data) * 0.7)
+    _90_idx = int(len(data) * 0.9)
+
+    x_train = data[:_70_idx]
+    y_train = label[:_70_idx]
+
+    x_validate = data[_70_idx:_90_idx]
+    y_validate = label[_70_idx:_90_idx]
+
+    x_test = data[_90_idx:]
+    y_test = label[_90_idx:]
+
+    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), x_test, y_test
+
+
+def shuffle_data(data, labels):
+    """shuffle data whilst remaining the correct label indices."""
+    joined_lists = list(zip(data, labels))
+    np.random.shuffle(joined_lists)  # Shuffle "joined_lists" in place
+    return zip(*joined_lists)  # Undo joining
+
+
+def data_augmentation(data, label):
+    """ @data: input data in array form (np.array).
+        @label: data labels (np.array) which corresponds to the data indexes.
+        @:returns new data and labels with more data (augmented) by rotation.
+        @: rotation/mirror
+    """
+    pass
+
+
