@@ -1,9 +1,15 @@
 from keras import Input
 from keras.applications.densenet import layers
 import tensorflow as tf
-
+import numpy as np
 
 ##create patches from original image
+from keras.dtensor.optimizers import AdamW
+from keras.losses import SparseCategoricalCrossentropy
+from keras.metrics import SparseTopKCategoricalAccuracy, SparseCategoricalAccuracy
+from keras.optimizers import Adam
+
+
 class Patches(layers.Layer):
     def __init__(self, patch_size):
         super(Patches, self).__init__()
@@ -38,8 +44,106 @@ class PatchEncoder(layers.Layer):
         return encoded
 
 
-def create_vit_model():
-    inputs = Input(shape=(240,240,3))
+def data_augmentation(x_train):
+    data_augmentation = tf.keras.Sequential(
+        [
+            layers.Normalization(),
+            layers.Resizing(240, 240),
+            layers.RandomFlip("horizontal"),
+            layers.RandomRotation(factor=0.02),
+            layers.RandomZoom(
+                height_factor=0.2, width_factor=0.2
+            ),
+        ],
+        name="data_augmentation",
+    )
+    # Compute the mean and the variance of the training data for normalization.
+    return data_augmentation.layers[0].adapt(x_train)
 
-def start_procedure(train_data, train_label):
-    pass
+
+def mlp(x, hidden_units, dropout_rate):
+    for units in hidden_units:
+        x = layers.Dense(units, activation=tf.nn.gelu)(x)
+        x = layers.Dropout(dropout_rate)(x)
+    return x
+
+
+def create_vit_model(transformer_layers_count):
+    patch_nr = 16
+    total_amount_patches = patch_nr * patch_nr
+    patch_size = 240 / patch_nr
+    inputs = Input(shape=(240, 240, 3))
+    # augmented = data_augmentation(inputs)     #without data_augmentation
+    patches = Patches(patch_size)(inputs)
+
+    encoded_patches = PatchEncoder(total_amount_patches, 64)(patches)
+
+    num_heads = 4
+    projection_dim = 64
+    transformer_units = [
+        projection_dim * 2,
+        projection_dim,
+    ]
+    mlp_head_units = [2048, 1024]
+    # Create multiple layers of the Transformer block.
+    for _ in range(transformer_layers_count):
+        # Layer normalization 1.
+        x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+        # Create a multi-head attention layer.
+        attention_output = layers.MultiHeadAttention(
+            num_heads=num_heads, key_dim=projection_dim, dropout=0.1
+        )(x1, x1)
+        # Skip connection 1.
+        x2 = layers.Add()([attention_output, encoded_patches])
+        # Layer normalization 2.
+        x3 = layers.LayerNormalization(epsilon=1e-6)(x2)
+        # MLP.
+        x3 = mlp(x3, hidden_units=transformer_units, dropout_rate=0.1)
+        # Skip connection 2.
+        encoded_patches = layers.Add()([x3, x2])
+
+    # Create a [batch_size, projection_dim] tensor.
+    representation = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+    representation = layers.Flatten()(representation)
+    representation = layers.Dropout(0.5)(representation)
+    # Add MLP.
+    features = mlp(representation, hidden_units=mlp_head_units, dropout_rate=0.5)
+    # Classify outputs.
+    logits = layers.Dense(2)(features)
+    # Create the Keras model.
+    model = tf.keras.Model(inputs=inputs, outputs=logits)
+    return model
+
+
+def split_data(data, label):
+    _70_idx = int(len(data) * 0.7)
+    _90_idx = int(len(data) * 0.9)
+
+    x_train = data[:_70_idx]
+    y_train = label[:_70_idx]
+
+    x_validate = data[_70_idx:_90_idx]
+    y_validate = label[_70_idx:_90_idx]
+
+    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate)
+
+
+def start_procedure(train_data, train_label, transformer_layers = 12, name="ViTL16"):
+    x, y, x_val, y_val = split_data(data=train_data, label=train_label)
+
+    vit_model = create_vit_model(transformer_layers)
+    #vit_model.summary()
+
+    vit_model.compile(optimizer=AdamW(learning_rate=0.001, weight_decay=0.0001),
+                      loss=SparseCategoricalCrossentropy(from_logits=True),
+                      metrics=[SparseCategoricalAccuracy(name="accuracy")])
+
+    # no callbacks for now
+
+    vit_model.fit(x=x, y=y,
+                  batch_size=256,
+                  epochs=100,
+                  validation_data=(x_val, y_val)
+                  )
+
+    vit_model.save(f"saved_models/{name}", overwrite=True)

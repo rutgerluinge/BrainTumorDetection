@@ -63,6 +63,9 @@ def load_images_method_2():
         dataset.append(np.array(image))
         labels.append(1)
 
+    dataset = np.array(dataset)
+    labels = np.array(labels)
+
     return dataset, labels
 
 if __name__ == '__main__':

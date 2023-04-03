@@ -36,6 +36,6 @@ if __name__ == '__main__':
         train_data = data_set[:int(len(data_set)*0.7)]
         train_labels = labels[:int(len(data_set) * 0.7)]
 
-        model = ViTL16.start_procedure(train_data, train_labels)
+        model = ViTL16.start_procedure(train_data, train_labels, transformer_layers=16)
 
 
