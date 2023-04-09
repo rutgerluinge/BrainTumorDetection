@@ -1,10 +1,12 @@
+from pathlib import Path
+
 from keras import Input
 from keras.applications.densenet import layers
 import tensorflow as tf
 import numpy as np
-
+# from vit_keras import vit
 ##create patches from original image
-from keras.dtensor.optimizers import AdamW
+from keras.dtensor.optimizers import AdamW, Adam
 from keras.losses import SparseCategoricalCrossentropy
 from keras.metrics import SparseCategoricalAccuracy
 
@@ -36,8 +38,7 @@ class PatchEncoder(layers.Layer):
         self.num_patches = num_patches
         self.projection = layers.Dense(units=projection_dim)
         self.position_embedding = layers.Embedding(
-            input_dim=num_patches, output_dim=projection_dim
-        )
+            input_dim=num_patches, output_dim=projection_dim)
 
     def call(self, patch):
         positions = tf.range(start=0, limit=self.num_patches, delta=1)
@@ -122,9 +123,17 @@ def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
 
     vit_model = create_vit_model(transformer_layers)
 
-    vit_model.compile(optimizer=AdamW(learning_rate=0.001, weight_decay=0.0001),
-                      loss="binary_crossentropy",
-                      metrics=["binary_accuracy"])
+    optimizer = AdamW(
+        learning_rate=0.001, weight_decay=0.0001
+    )
+
+    vit_model.compile(
+        optimizer=optimizer,
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        metrics=[
+            SparseCategoricalAccuracy(name="accuracy"),
+        ],
+    )
 
     # no callbacks for now
 
@@ -133,5 +142,7 @@ def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
                            epochs=100,
                            validation_data=(x_val, y_val))
 
-    vit_model.save_weights(f"{name}_weights")
-    vit_model.save(f"saved_models/{name}", overwrite=True)
+    vit_model.save('my_model_vit16.h5')
+
+    # vit_model.save_weights(f"{name}_weights")
+    # vit_model.save(f"{name}", overwrite=True)
