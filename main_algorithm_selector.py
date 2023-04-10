@@ -40,7 +40,11 @@ if __name__ == '__main__':
         data_set, labels = image_load.load_images_method_2(256)
         data_set, labels = image_load.shuffle_data(data_set, labels)
 
+<<<<<<< HEAD
         model = vit16l.start_procedure(data=data_set, labels=labels, size=256)
+=======
+        model = ViTL16.start_procedure(train_data, train_labels, transformer_layers=16)
+>>>>>>> abe1c35 (Vit model, adapted from kaggle.com/code/essammohamed4320/brain-tumor-detection-using-cnn-vit/notebook#Setting-up-general-parameter)
 
     if args.algorithm == "B16":
         data_set, labels = image_load.load_images_method_2(256)

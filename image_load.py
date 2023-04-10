@@ -63,7 +63,14 @@ def load_images_method_2(image_input_size=242):
         dataset.append(np.array(image))
         labels.append(1)
 
+<<<<<<< HEAD
     return np.array(dataset), np.array(labels)
+=======
+    dataset = np.array(dataset)
+    labels = np.array(labels)
+
+    return dataset, labels
+>>>>>>> abe1c35 (Vit model, adapted from kaggle.com/code/essammohamed4320/brain-tumor-detection-using-cnn-vit/notebook#Setting-up-general-parameter)
 
 
 def split_data(data, label):
