@@ -31,7 +31,7 @@ if __name__ == '__main__':
         UNet.start_procedure(data=data_set, labels=labels)
 
     if args.algorithm == "ViT-L16":
-        data_set, labels = load_images_method_2(240)
+        data_set, labels = load_images_method_2(256)    #256 as 256 %16 = 0 and 256 %32 = 0
         data_set, labels = shuffle_data(data_set, labels)
         x, y, x_val, y_val, x_test, y_test = image_load.split_data(data_set, labels)
 

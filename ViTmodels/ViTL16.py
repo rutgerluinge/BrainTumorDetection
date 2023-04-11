@@ -1,11 +1,9 @@
-
-from keras import Input
+from keras import Input, Model
 from keras.applications.densenet import layers
 import tensorflow as tf
 
 from keras.dtensor.optimizers import AdamW, Adam
 from keras.metrics import SparseCategoricalAccuracy
-
 
 
 class Patches(layers.Layer):
@@ -48,31 +46,30 @@ def mlp(x, hidden_units, dropout_rate):
     return x
 
 
-def create_vit_model(transformer_layers_count):
-    """vit start"""
-    patch_nr = 16
-    total_amount_patches = patch_nr * patch_nr
-    patch_size = 240 / patch_nr
-    inputs = Input(shape=(240, 240, 3))
-    # augmented = data_augmentation(inputs)     #without data_augmentation
+def create_vit_model(transformer_layers=12, h_size_d=None, mlp_size=None, heads=4, patch_size=16, image_size=256):
+    """vit start, standard argument values are according to keras vit example, use your own parameters to follow:
+        an image is worth 16x16 words architecture."""
+    patch_count = image_size / patch_size   #make sure this is nice for the img size/patch_size
+    patch_size = image_size / patch_count
+    inputs = Input(shape=(image_size, image_size, 3))
     patches = Patches(patch_size)(inputs)
 
-    encoded_patches = PatchEncoder(total_amount_patches, 64)(patches)
+    projection_dim = 64  # not sure about this
 
-    num_heads = 4
-    projection_dim = 64
+    encoded_patches = PatchEncoder(patch_count, projection_dim=projection_dim)(patches)
+
     transformer_units = [
         projection_dim * 2,
         projection_dim,
     ]
     mlp_head_units = [2048, 1024]
     # Create multiple layers of the Transformer block.
-    for _ in range(transformer_layers_count):
+    for _ in range(transformer_layers):
         # Layer normalization 1.
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
         # Create a multi-head attention layer.
         attention_output = layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=projection_dim, dropout=0.1
+            num_heads=heads, key_dim=projection_dim, dropout=0.1
         )(x1, x1)
         # Skip connection 1.
         x2 = layers.Add()([attention_output, encoded_patches])
@@ -103,6 +100,50 @@ def gather_results(x_test, y_test, model):
 
         if y_hat == y_test[idx]:
             count += 1
+
+
+def vit_base(input_patch_size=16):
+    t_layers = 12
+    h_size = 768
+    mlp_size = 3072
+    heads = 12
+
+    vit = create_vit_model(transformer_layers=t_layers, h_size_d=h_size, mlp_size=mlp_size, heads=heads,
+                           patch_size=input_patch_size)
+
+
+def vit_large(input_patch_size=16):
+    t_layers = 24
+    h_size = 1024
+    mlp_size = 4096
+    heads = 16
+
+    vit = create_vit_model(transformer_layers=t_layers, h_size_d=h_size, mlp_size=mlp_size, heads=heads,
+                           patch_size=input_patch_size)
+
+
+def vit_huge(input_patch_size=16):
+    t_layers = 32
+    h_size = 1280
+    mlp_size = 5120
+    heads = 16
+
+    vit = create_vit_model(transformer_layers=t_layers, h_size_d=h_size, mlp_size=mlp_size, heads=heads,
+                           patch_size=input_patch_size)
+
+
+def compile_vit_model(vit_model: Model):
+    optimizer = AdamW(
+        learning_rate=0.001, weight_decay=0.0001
+    )
+
+    vit_model.compile(
+        optimizer=optimizer,
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        metrics=[
+            SparseCategoricalAccuracy(name="accuracy"),
+        ],
+    )
 
 
 def start_procedure(x, y, x_val, y_val, transformer_layers=12, name="ViTL16"):
