@@ -1,16 +1,11 @@
-from pathlib import Path
 
 from keras import Input
 from keras.applications.densenet import layers
 import tensorflow as tf
-import numpy as np
-# from vit_keras import vit
-##create patches from original image
+
 from keras.dtensor.optimizers import AdamW, Adam
-from keras.losses import SparseCategoricalCrossentropy
 from keras.metrics import SparseCategoricalAccuracy
 
-from image_load import split_data, data_augmentation
 
 
 class Patches(layers.Layer):
