@@ -17,8 +17,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.algorithm == "VGG":
-        train_data, val_data = image_load.load_images()
-        VGG.start_procedure(train_data=train_data, validation_data=val_data)
+        data_set, labels = image_load.load_images_method_2(224)
+        data_set, labels = image_load.shuffle_data(data_set, labels)
+        VGG.start_procedure(data=data_set, labels=labels)
 
     if args.algorithm == "ResNet":
         train_data, val_data = image_load.load_images()

@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from image_load import split_data
 
 
 def VGG_model():
@@ -31,7 +32,9 @@ def VGG_model():
     
 
 """VGG CNN file"""
-def start_procedure(train_data, validation_data):
+def start_procedure(data, labels):
+    # data
+    x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
     
     print("vgg algorithm here")
 
@@ -44,7 +47,7 @@ def start_procedure(train_data, validation_data):
               metrics=[keras.metrics.BinaryAccuracy()])
 
     print("---------------Start fit (training)--------------------")
-    model.fit(train_data, validation_data=validation_data, epochs=20)
+    model.fit(x=x, y=y, validation_data=(x_val,y_val), epochs=20)
     model.save_weights(filepath="../model_weights/VGG/")
     model.save(filepath = Path("../models/VGG/"), overwrite=True)
 
@@ -58,6 +61,6 @@ def start_procedure(train_data, validation_data):
               loss=keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=[keras.metrics.BinaryAccuracy()])
     
-    model.fit(train_data, validation_data=validation_data, epochs=10)
+    model.fit(x=x, y=y, validation_data=(x_val,y_val), epochs=10)
     model.save_weights(filepath="../model_weights/VGG/")
     model.save(filepath = Path("../models/VGG/"), overwrite=False)

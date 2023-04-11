@@ -1,10 +1,10 @@
 # https://github.com/faustomorales/vit-keras
 
-from keras.optimizers import Adam
-
 import numpy as np
 import matplotlib.pyplot as plt
 from vit_keras import vit, utils, visualize
+from keras.optimizers import Adam
+from image_load import split_data
 
 
 def start_procedure(data, labels, size = 224, name = "vit16b"):
@@ -14,7 +14,7 @@ def start_procedure(data, labels, size = 224, name = "vit16b"):
                         activation='sigmoid',
                         pretrained=True,
                         include_top=True,
-                        pretrained_top=True,
+                        pretrained_top=False,
                         classes=2)
     classes = [0, 1]
 
