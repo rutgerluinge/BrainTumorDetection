@@ -1,8 +1,10 @@
 from argparse import ArgumentParser
 
 from CNNmodels import ResNet, VGG, UNet
-from ViTmodels import ViTL16, vit16l
+from ViTmodels import ViTL16, vit16l, ViTB16
 from image_load import *
+import numpy as np
+
 
 
 import image_load
@@ -43,5 +45,10 @@ if __name__ == '__main__':
 
         model = vit16l.start_procedure(data=data_set, labels=labels, size=256)
 
+    if args.algorithm == "B16":
+        data_set, labels = image_load.load_images_method_2(256)
+        data_set, labels = image_load.shuffle_data(data_set, labels)
+
+        model = ViTB16.start_procedure(data=data_set, labels=labels, size=256)
 
 
