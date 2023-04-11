@@ -82,11 +82,12 @@ def split_data(data, label):
     x_test = data[_90_idx:]
     y_test = label[_90_idx:]
 
-    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), x_test, y_test
+    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), np.array(x_test), np.array(y_test)
 
 
 def shuffle_data(data, labels):
     """shuffle data whilst remaining the correct label indices."""
+    np.random.seed(42)
     joined_lists = list(zip(data, labels))
     np.random.shuffle(joined_lists)  # Shuffle "joined_lists" in place
     data, labels = zip(*joined_lists)
@@ -99,6 +100,11 @@ def data_augmentation(data_images, labels):
         @:returns new data and labels with more data (augmented) by rotation.
         @: rotation/mirror
     """
+    np.random.seed(42)
+    iaa.iarandom.seed(42)
+
+    data_images = list(data_images)
+    labels = list(labels)
     seq = iaa.Sequential([
         iaa.Flipud(p=0.5),  # flip the image vertically with probability 0.5
         iaa.Affine(rotate=(-10, 10)),  # rotate the image by -10 to 10 degrees
@@ -122,4 +128,4 @@ def data_augmentation(data_images, labels):
         data_images.append(augmented_image)
         labels.append(label)
 
-    return data_images, labels
+    return np.array(data_images), np.array(labels)

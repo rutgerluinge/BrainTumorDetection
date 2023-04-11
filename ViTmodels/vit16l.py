@@ -7,7 +7,9 @@ from vit_keras import vit
 def start_procedure(data, labels, size=256, name="vit16l"):
     x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
 
-    model = vit.vit_l16(image_size=(size, size))
+    model = vit.vit_l16(image_size=(size, size),
+                        pretrained=True,
+                        classes=2)
 
     model.compile(optimizer=Adam(),
                       loss="binary_crossentropy",

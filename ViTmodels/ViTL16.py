@@ -10,7 +10,7 @@ from keras.dtensor.optimizers import AdamW, Adam
 from keras.losses import SparseCategoricalCrossentropy
 from keras.metrics import SparseCategoricalAccuracy
 
-from image_load import split_data
+from image_load import split_data, data_augmentation
 
 
 class Patches(layers.Layer):
@@ -44,23 +44,6 @@ class PatchEncoder(layers.Layer):
         positions = tf.range(start=0, limit=self.num_patches, delta=1)
         encoded = self.projection(patch) + self.position_embedding(positions)
         return encoded
-
-
-def data_augmentation(x_train):
-    data_augmentation = tf.keras.Sequential(
-        [
-            layers.Normalization(),
-            layers.Resizing(240, 240),
-            layers.RandomFlip("horizontal"),
-            layers.RandomRotation(factor=0.02),
-            layers.RandomZoom(
-                height_factor=0.2, width_factor=0.2
-            ),
-        ],
-        name="data_augmentation",
-    )
-    # Compute the mean and the variance of the training data for normalization.
-    return data_augmentation.layers[0].adapt(x_train)
 
 
 def mlp(x, hidden_units, dropout_rate):
@@ -118,9 +101,16 @@ def create_vit_model(transformer_layers_count):
     return model
 
 
-def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
-    x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
+def gather_results(x_test, y_test, model):
+    count = 0
+    for idx, test_input in enumerate(x_test):
+        y_hat = model.predict(test_input)
 
+        if y_hat == y_test[idx]:
+            count += 1
+
+
+def start_procedure(x, y, x_val, y_val, transformer_layers=12, name="ViTL16"):
     vit_model = create_vit_model(transformer_layers)
 
     optimizer = AdamW(
@@ -142,7 +132,9 @@ def start_procedure(data, labels, transformer_layers=12, name="ViTL16"):
                            epochs=100,
                            validation_data=(x_val, y_val))
 
-    vit_model.save('my_model_vit16.h5')
+    vit_model.save(f'{name}.h5')
+    vit_model.save_weights(f'{name}_weights.h5')
+    return vit_model
 
     # vit_model.save_weights(f"{name}_weights")
     # vit_model.save(f"{name}", overwrite=True)

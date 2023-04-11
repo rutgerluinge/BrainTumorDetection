@@ -32,6 +32,7 @@ if __name__ == '__main__':
 
     if args.algorithm == "ViT-L16":
         data_set, labels = image_load.load_images_method_2(240)
+        data_set, labels = image_load.data_augmentation(data_set, labels)
         data_set, labels = image_load.shuffle_data(data_set, labels)
 
         model = ViTL16.start_procedure(data=data_set, labels=labels, transformer_layers=16)
@@ -42,11 +43,5 @@ if __name__ == '__main__':
 
         model = vit16l.start_procedure(data=data_set, labels=labels, size=256)
 
-    if args.algorithm == "test":
-        data_set, labels = image_load.load_images_method_2(256)
-        data_set, labels = image_load.shuffle_data(data_set, labels)
-        print(f"len data: {len(data_set)}, labels: {len(labels)}")
 
-        augmented_images, augmented_labels = image_load.data_augmentation(data_set, labels)
-        print(f"len data: {len(augmented_images)}, labels: {len(augmented_labels)}")
 
