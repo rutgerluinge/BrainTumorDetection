@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import imgaug.augmenters as iaa
 from copy import copy
 
-def load_images(width=256, height=256) -> {DirectoryIterator, DirectoryIterator}:
+
+def load_images(width=256, height=256):
     batch_size: int = 32
 
     data_directory = Path("brain_tumor_dataset")
@@ -82,8 +83,31 @@ def split_data(data, label):
     x_test = data[_90_idx:]
     y_test = label[_90_idx:]
 
-    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), np.array(x_test), np.array(y_test)
+    return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), np.array(x_test), np.array(
+        y_test)
 
+def split_test_data(data, labels,cutoff=0.9):
+    """function to return data split in train/validate data and test data
+        standard cutoff =0.9 meaning 10 percent test data"""
+    cutoff_idx = int(len(data) * cutoff)
+
+    x_train_val = data[:cutoff_idx]
+    y_train_val = labels[:cutoff_idx]
+
+    x_test = data[cutoff_idx:]
+    y_test = labels[cutoff_idx:]
+
+    return np.array(x_train_val), np.array(y_train_val), np.array(x_test), np.array(y_test)
+
+def reformat_labels(labels):
+    new_labels = []
+    for label in labels:
+        if label == 1:
+            new_labels.append([0, 1])
+        if label == 0:
+            new_labels.append([1, 0])
+
+    return np.array(new_labels)
 
 def shuffle_data(data, labels):
     """shuffle data whilst remaining the correct label indices."""
@@ -91,7 +115,7 @@ def shuffle_data(data, labels):
     joined_lists = list(zip(data, labels))
     np.random.shuffle(joined_lists)  # Shuffle "joined_lists" in place
     data, labels = zip(*joined_lists)
-    return   list(data), list(labels)
+    return list(data), list(labels)
 
 
 def data_augmentation(data_images, labels):
@@ -105,23 +129,12 @@ def data_augmentation(data_images, labels):
 
     data_images = list(data_images)
     labels = list(labels)
-    seq = iaa.Sequential([
+    seq = iaa.Sequential([  #import imgaug.augmenters as iaa
         iaa.Flipud(p=0.5),  # flip the image vertically with probability 0.5
         iaa.Affine(rotate=(-10, 10)),  # rotate the image by -10 to 10 degrees
         iaa.GaussianBlur(sigma=(0, 1.0)),  # blur the image with a sigma of 0 to 1.0
     ])
     plt.fig, axes = plt.subplots(nrows=1, ncols=2)
-
-    # for image in data_images:     #uncomment to see
-    #     augmented_image = seq(image=image)
-    #
-    #     axes[0].imshow(image, cmap='gray')
-    #     axes[0].set_title('original')
-    #
-    #     # Plot the second image on the second subplot
-    #     axes[1].imshow(augmented_image, cmap='gray')
-    #     axes[1].set_title('augmented')
-    #     plt.show()
 
     for image, label in zip(copy(data_images), copy(labels)):
         augmented_image = seq(image=image)

@@ -22,7 +22,7 @@ def VGG_model():
     x = keras.layers.GlobalAveragePooling2D()(x)
 
     # Dense classifier with one unit (binary classification)
-    outputs = keras.layers.Dense(1)(x)
+    outputs = keras.layers.Dense(2)(x)
 
     model = keras.Model(inputs, outputs, name="VGG")
 

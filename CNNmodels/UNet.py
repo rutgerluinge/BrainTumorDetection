@@ -12,9 +12,8 @@ def start_procedure(data, labels):
 
     model = Sequential([Unet_model(),  # original U-Net model
                         Flatten(),  # flatten layer to 1d
-                        Dense(1, activation='sigmoid')  # add 1 fully connected layer to output node
+                        Dense(2, activation='sigmoid')  # add 1 fully connected layer to output node
                         ])
-    # model.summary()
 
     model.compile(optimizer=Adam(),
                   loss="binary_crossentropy",
