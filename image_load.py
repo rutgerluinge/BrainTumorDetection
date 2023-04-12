@@ -87,6 +87,16 @@ def split_data(data, label):
         y_test)
 
 
+def reformat_labels(labels):
+    new_labels = []
+    for label in labels:
+        if label == 1:
+            new_labels.append([0, 1])
+        if label == 0:
+            new_labels.append([1, 0])
+
+    return np.array(new_labels)
+
 def shuffle_data(data, labels):
     """shuffle data whilst remaining the correct label indices."""
     np.random.seed(42)
