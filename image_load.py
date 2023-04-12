@@ -86,6 +86,18 @@ def split_data(data, label):
     return np.array(x_train), np.array(y_train), np.array(x_validate), np.array(y_validate), np.array(x_test), np.array(
         y_test)
 
+def split_test_data(data, labels,cutoff=0.9):
+    """function to return data split in train/validate data and test data
+        standard cutoff =0.9 meaning 10 percent test data"""
+    cutoff_idx = int(len(data) * cutoff)
+
+    x_train_val = data[:cutoff_idx]
+    y_train_val = labels[:cutoff_idx]
+
+    x_test = data[cutoff_idx:]
+    y_test = labels[cutoff_idx:]
+
+    return np.array(x_train_val), np.array(y_train_val), np.array(x_test), np.array(y_test)
 
 def reformat_labels(labels):
     new_labels = []
