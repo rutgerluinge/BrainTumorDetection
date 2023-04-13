@@ -10,9 +10,41 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
           "tab:red", "tab:purple"]  # nice standard matplotlib colors
 
 
+def loss_accuracy_graph_from_pickle(history_dict: Dict[str, Model]):
+    """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
+    fig, axs = plt.subplots(1, 2)
+    fig.subplots_adjust(wspace=0.4)
+
+    # compute losses (train and validation)
+    color_idx = 0
+    for key, value in history_dict.items():
+        axs[0].plot(value['loss'], label=f"{key}_train", color=colors[color_idx])
+        axs[0].plot(value['val_loss'], label=f"{key}_val", linestyle="--", color=colors[color_idx])
+        color_idx += 1
+
+    axs[0].set_title("Binary cross-entropy loss")
+    axs[0].legend()
+    axs[0].set_xlabel('Epoch')
+    axs[0].set_ylabel('Loss')
+
+    # compute accuracy (train and validation)
+
+    color_idx = 0
+    for key, value in history_dict.items():
+        axs[1].plot(value['binary_accuracy'], label=f"{key}_train", color=colors[color_idx])
+        axs[1].plot(value['val_binary_accuracy'], label=f"{key}_val", linestyle="--", color=colors[color_idx])
+        color_idx += 1
+
+    axs[1].set_title("Binary Accuracy")
+    axs[1].legend()
+    axs[1].set_xlabel('Epoch')
+    axs[1].set_ylabel('Accuracy')
+
+
 def loss_accuracy_graph(data_dict: Dict[str, Model]):
     """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
     fig, axs = plt.subplots(1, 2)
+    plt.figure(figsize=(25, 7))
     fig.subplots_adjust(wspace=0.4)
 
     # compute losses (train and validation)
@@ -41,7 +73,7 @@ def loss_accuracy_graph(data_dict: Dict[str, Model]):
     axs[1].set_ylabel('Accuracy')
 
 
-def bar_accuracy_plot(result_dict: Dict[str, List[float, float]]):
+def bar_accuracy_plot(result_dict: Dict[str, List[float]]):
     """can be used to showcase all algorithms accuracy from test data"""
     """:param should be a dictionary, where the key is the name of the algorithm. The value of the dictionary,"""
     """ is the outcome of the corresponding model.evaluate outcome. so: dict["resnet"] = resnet.evaluate(x_test, y_test)"""
@@ -61,7 +93,7 @@ def bar_accuracy_plot(result_dict: Dict[str, List[float, float]]):
     ax.set_ylabel("Binary Accuracy")
 
 
-def scatter_plot(model_dict: Dict[str, Model], result_dict: Dict[str, List[float, float]]):
+def scatter_plot(model_dict: Dict[str, Model], result_dict: Dict[str, List[float]]):
     """:param model_dict maps the name of the model to the actual keras model (Model)
        :param result_dict maps name of model (correspond with model_names) to result (same as function above):
         dict["resnet"] = resnet.evaluate(x_test, y_test)"""
@@ -83,7 +115,7 @@ def scatter_plot(model_dict: Dict[str, Model], result_dict: Dict[str, List[float
 
     non_trainable_params = [params[0] for params in model_param_dict.values()]  # 1 for trainable, 0 for non trainable
     trainable_params = [params[1] for params in model_param_dict.values()]  # 1 for trainable, 0 for non trainable
-    trainable_param_size = [params / 1000 for params in trainable_params]
+    trainable_param_size = [np.log(params) for params in trainable_params]  #use log scale for now
     total_params = np.add(trainable_params, non_trainable_params)
 
     plt.scatter(total_params, bin_accuracies, s=trainable_param_size, c=colors[:len(model_dict.keys())])
