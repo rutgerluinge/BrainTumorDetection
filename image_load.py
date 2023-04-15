@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import imgaug.augmenters as iaa
 from copy import copy
+from PIL import Image
 
 
 def load_images(width=256, height=256):
@@ -130,7 +131,7 @@ def data_augmentation(data_images, labels):
     data_images = list(data_images)
     labels = list(labels)
     seq = iaa.Sequential([  #import imgaug.augmenters as iaa
-        iaa.Flipud(p=0.5),  # flip the image vertically with probability 0.5
+        iaa.Fliplr(p=0.5),  # flip the image vertically with probability 0.5
         iaa.Affine(rotate=(-10, 10)),  # rotate the image by -10 to 10 degrees
         iaa.GaussianBlur(sigma=(0, 1.0)),  # blur the image with a sigma of 0 to 1.0
     ])
@@ -142,3 +143,8 @@ def data_augmentation(data_images, labels):
         labels.append(label)
 
     return np.array(data_images), np.array(labels)
+
+def test_augmentation():
+    images, labels = load_images_method_2(224)
+    data_augmentation(images,labels)
+

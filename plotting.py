@@ -2,13 +2,13 @@ import itertools
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from keras.layers import Conv2D
-
 from typing import Dict, List
 from keras.models import Model
 import numpy as np
 import keras.backend as K
 from sklearn.metrics import confusion_matrix
+
+
 import cv2
 
 
@@ -16,42 +16,45 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
           "tab:red", "tab:purple"]  # nice standard matplotlib colors
 
 
-def loss_accuracy_graph_from_pickle(history_dict: Dict[str, Model]):
+def loss_accuracy_graph_from_pickle(history_dict):
     """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
-    fig, axs = plt.subplots(2, 2)
+    # plt.style.use('dark_background')
+    fig, axs = plt.subplots(2, 2, figsize=(8, 8))
+
     plt.figure(figsize=(22, 22))
 
     fig.subplots_adjust(wspace=0.2, hspace=0.8)
 
     # compute losses (train and validation)
     for key, value in history_dict.items():
-        axs[0][0].plot(value['binary_accuracy'], label=f"{key}")
+        axs[0][0].plot(value[2], label=f"{key}")
 
     axs[0][0].set_title("Training Accuracy")
     axs[0][0].set_ylabel('Binary Accuracy')
-    axs[0][0].set_ylim(0, 1)
+    axs[0][0].set_ylim(0, 1.05)
 
     for key, value in history_dict.items():
-        axs[0][1].plot(value['val_binary_accuracy'])
+        axs[0][1].plot(value[3])
 
-    axs[0][1].set_ylim(0, 1)
+    axs[0][1].set_ylim(0, 1.05)
     axs[0][1].set_title("Validation Accuracy")
 
     for key, value in history_dict.items():
-        axs[1][0].plot(value['loss'])
+        axs[1][0].plot(value[0])
 
     axs[1][0].set_title("Training Loss")
     axs[1][0].set_xlabel('Epoch')
     axs[1][0].set_ylabel('Binary cross-entropy loss')
-
+    axs[1][0].set_ylim(0, 3)
     for key, value in history_dict.items():
-        axs[1][1].plot(value['val_loss'])
+        axs[1][1].plot(value[1])
 
     axs[1][1].set_title("Validation Loss")
     axs[1][1].set_xlabel('Epoch')
+    axs[1][1].set_ylim(0, 3)
 
-    fig.legend(bbox_to_anchor=(1.10, 0.5), loc='center right', borderaxespad=0., bbox_transform=fig.transFigure)
-
+    fig.legend(bbox_to_anchor=(1.20, 0.5), loc='center right', borderaxespad=0., bbox_transform=fig.transFigure)
+    fig.tight_layout()
 
 def loss_accuracy_graph(data_dict: Dict[str, Model]):
     """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
@@ -101,19 +104,20 @@ def bar_accuracy_plot(result_dict: Dict[str, List[float]]):
         ax.text(i, v / 2, str(round(v, 3)), color='white', fontweight='bold', ha='center', va='center')
 
     ax.set_ylim(0, 1)
-    ax.set_title("Accuracy of All Models (test data)")
+    ax.set_title("Accuracy of All Models")
     ax.set_ylabel("Binary Accuracy")
 
 
-def scatter_plot(model_dict: Dict[str, Model], result_dict: Dict[str, List[float]]):
+def scatter_plot(model_dict: Dict[str, Model], acc_loss_dict, flops: Dict[str, float], dot_scalar = 500):
     """:param model_dict maps the name of the model to the actual keras model (Model)
        :param result_dict maps name of model (correspond with model_names) to result (same as function above):
         dict["resnet"] = resnet.evaluate(x_test, y_test)"""
-
+    plt.figure(figsize=(8, 8))
     # scatterplot accuracy of the model vs amount of parameters
 
     def millions_formatter(x, pos):
         return '{:.1f}M'.format(x * 1e-6)
+
 
     model_param_dict = {}
 
@@ -123,44 +127,52 @@ def scatter_plot(model_dict: Dict[str, Model], result_dict: Dict[str, List[float
 
         model_param_dict[name] = [non_trainable_count, trainable_count]
 
-    bin_accuracies = [loss_acc[0] for loss_acc in result_dict.values()]
+    bin_accuracies = [loss_acc[0] for loss_acc in acc_loss_dict.values()]
 
     non_trainable_params = [params[0] for params in model_param_dict.values()]  # 1 for trainable, 0 for non trainable
     trainable_params = [params[1] for params in model_param_dict.values()]  # 1 for trainable, 0 for non trainable
+    flops = [value for value in flops.values()]
 
-    trainable_param_size = [500* np.log(params) for params in trainable_params]  # use log scale for now
     total_params = np.add(trainable_params, non_trainable_params)
 
-    plt.scatter(total_params, bin_accuracies, s=trainable_param_size, c=colors[:len(model_dict.keys())])
+    s_norm = total_params / np.max(total_params)
+    s_scaled = s_norm * dot_scalar  # Scale the s values by a factor of 500
+
+
+    plt.scatter(flops, bin_accuracies, s=s_scaled, c=colors[:len(model_dict.keys())], alpha=0.5)
 
     for idx, name in enumerate(model_dict.keys()):
-        plt.text(total_params[idx], bin_accuracies[idx], f'{name}', color="black", ha='center', va='center')
+        plt.text(flops[idx], bin_accuracies[idx], f'{name}', color="black", ha='center', va='center')
 
     # boundaries
-    plt.xlim([min(total_params) - 15000000, max(total_params) + 15000000])
-    plt.ylim(0, 1)
+    plt.xlim([0, 40])
+    plt.ylim(0, 1.05)
 
 
     # Set the plot title and axis labels
-    plt.title('Binaray Accuracy vs Model Parameters')
+    plt.title('Accuracy vs GFLOPs vs Total Parameters')
 
     # format to millions on x-axis
-    formatter = ticker.FuncFormatter(millions_formatter)
-    plt.gca().xaxis.set_major_formatter(formatter)
+    # formatter = ticker.FuncFormatter(millions_formatter)
+    # plt.gca().xaxis.set_major_formatter(formatter)
 
-    plt.xlabel('Total Parameters')
+    plt.xlabel('Operations in giga FLOPs')
     plt.ylabel('Binary Accuracy')
 
     # Show the plot
     plt.show()
 
 
-def confusion_matrices(model_dict: Dict[str, Model], x_test, y_test):
+def confusion_matrices(model_dict: Dict[str, Model], data_dict):
     plt.figure(figsize=(20, 35))
     fig, axs = plt.subplots(3, 2, figsize=(8, 8))
     x, y = 0, 0
     im = None
     for name, model in model_dict.items():
+        data = data_dict[name]
+        x_test = data[0]
+        y_test = data[1]
+
         print(f"model: {name}")
         y_pred = model.predict(x_test)
         y_pred2 = []
@@ -181,7 +193,7 @@ def confusion_matrices(model_dict: Dict[str, Model], x_test, y_test):
 
 
 def plot_confusion_matrix(cm, classes, axis, title='Confusion matrix', cmap=plt.cm.Blues):
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    cm = cm.astype('int') #/ cm.sum(axis=1)[:, np.newaxis]
 
     im = axis.imshow(cm, interpolation='nearest', cmap=cmap)
     axis.set_title(title)
@@ -194,7 +206,7 @@ def plot_confusion_matrix(cm, classes, axis, title='Confusion matrix', cmap=plt.
     axis.set_yticks(tick_marks)
     axis.set_yticklabels(classes)
 
-    fmt = '.2f'
+    fmt = '.0f'
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         axis.text(j, i, format(cm[i, j], fmt),
