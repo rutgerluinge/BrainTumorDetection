@@ -31,23 +31,17 @@ if __name__ == '__main__':
 
         UNet.start_procedure(data=data_set, labels=labels)
 
-    if args.algorithm == "ViT-L16":
-        data_set, labels = image_load.load_images_method_2(240)
-        data_set, labels = image_load.shuffle_data(data_set, labels)
-
-        model = ViTL16.start_procedure(data=data_set, labels=labels, transformer_layers=16)
-
-    if args.algorithm == "vit16l":
-        data_set, labels = image_load.load_images_method_2(256)
-        data_set, labels = image_load.shuffle_data(data_set, labels)
-
-        model = vit16l.start_procedure(data=data_set, labels=labels, size=256)
-
     if args.algorithm == "B16":
-        data_set, labels = image_load.load_images_method_2(256)
+        data_set, labels = image_load.load_images_method_2(224)
         data_set, labels = image_load.shuffle_data(data_set, labels)
 
-        model = ViTB16.start_procedure(data=data_set, labels=labels, size=256)
+        model = ViTB16.start_procedure(data=data_set, labels=labels, size=224)
+
+    if args.algorithm == "B32":
+        data_set, labels = image_load.load_images_method_2(224)
+        data_set, labels = image_load.shuffle_data(data_set, labels)
+
+        model = ViTB16.start_procedure(data=data_set, labels=labels, size=224)    
 
     if args.algorithm == "test":
         data_set, labels = image_load.load_images_method_2(256)
