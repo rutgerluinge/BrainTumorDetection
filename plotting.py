@@ -17,7 +17,7 @@ colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:b
 
 
 def loss_accuracy_graph_from_pickle(history_dict):
-    """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
+    """:param history_dict dictionary which maps name of architecture to the training history"""
     # plt.style.use('dark_background')
     fig, axs = plt.subplots(2, 2, figsize=(8, 8))
 
@@ -56,7 +56,7 @@ def loss_accuracy_graph_from_pickle(history_dict):
     fig.legend(bbox_to_anchor=(1.20, 0.5), loc='center right', borderaxespad=0., bbox_transform=fig.transFigure)
     fig.tight_layout()
 
-def loss_accuracy_graph(data_dict: Dict[str, Model]):
+def loss_accuracy_graph(model_dict: Dict[str, Model]):
     """:param data_dict dictionary which maps name of architecture to the keras model: dict["resnet"] = Model(resnet)"""
     fig, axs = plt.subplots(1, 2)
     plt.figure(figsize=(25, 7))
@@ -64,7 +64,7 @@ def loss_accuracy_graph(data_dict: Dict[str, Model]):
 
     # compute losses (train and validation)
     color_idx = 0
-    for key, value in data_dict.items():
+    for key, value in model_dict.items():
         axs[0].plot(value.history['loss'], label=f"{key}_train", color=colors[color_idx])
         axs[0].plot(value.history['val_loss'], label=f"{key}_val", linestyle="--", color=colors[color_idx])
         color_idx += 1
@@ -77,7 +77,7 @@ def loss_accuracy_graph(data_dict: Dict[str, Model]):
     # compute accuracy (train and validation)
 
     color_idx = 0
-    for key, value in data_dict.items():
+    for key, value in model_dict.items():
         axs[1].plot(value.history['binary_accuracy'], label=f"{key}_train", color=colors[color_idx])
         axs[1].plot(value.history['val_binary_accuracy'], label=f"{key}_val", linestyle="--", color=colors[color_idx])
         color_idx += 1
@@ -89,9 +89,8 @@ def loss_accuracy_graph(data_dict: Dict[str, Model]):
 
 
 def bar_accuracy_plot(result_dict: Dict[str, List[float]]):
-    """can be used to showcase all algorithms accuracy from test data"""
-    """:param should be a dictionary, where the key is the name of the algorithm. The value of the dictionary,"""
-    """ is the outcome of the corresponding model.evaluate outcome. so: dict["resnet"] = resnet.evaluate(x_test, y_test)"""
+    """can be used to showcase all algorithms accuracy from test data
+       :param result_dict mapping from model name to final accuracy"""
     fig, ax = plt.subplots()
 
     losses = [loss_acc[1] for loss_acc in result_dict.values()]  # can be used if we want
@@ -110,8 +109,10 @@ def bar_accuracy_plot(result_dict: Dict[str, List[float]]):
 
 def scatter_plot(model_dict: Dict[str, Model], acc_loss_dict, flops: Dict[str, float], dot_scalar = 500):
     """:param model_dict maps the name of the model to the actual keras model (Model)
-       :param result_dict maps name of model (correspond with model_names) to result (same as function above):
-        dict["resnet"] = resnet.evaluate(x_test, y_test)"""
+       :param acc_loss_dict dictionary containing accuracy and acc_loss_dict
+       :param flops gflops dictionary
+       :param dot scalar scalar to scale the scatter point size.
+        """
     plt.figure(figsize=(8, 8))
     # scatterplot accuracy of the model vs amount of parameters
 
@@ -164,6 +165,9 @@ def scatter_plot(model_dict: Dict[str, Model], acc_loss_dict, flops: Dict[str, f
 
 
 def confusion_matrices(model_dict: Dict[str, Model], data_dict):
+    """Confusion matrices for all models.
+        @:param model_dict: dictionary containing all models
+        @:param data_dict, containing the validation data of the model."""
     plt.figure(figsize=(20, 35))
     fig, axs = plt.subplots(3, 2, figsize=(8, 8))
     x, y = 0, 0
