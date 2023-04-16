@@ -2,11 +2,11 @@ from keras.optimizers import Adam
 
 from image_load import split_data
 from vit_keras import vit
+from keras.layers import Layer
 
 
 def start_procedure(data, labels, size=256, name="vit16l"):
     x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
-    vit.
     model = vit.vit_l16(image_size=(size, size),
                         activation="sigmoid",
                         include_top=True,
