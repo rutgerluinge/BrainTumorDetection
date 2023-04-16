@@ -1,18 +1,19 @@
-# https://keras.io/guides/transfer_learning/
+# https://keras.io/guides/transfer_learning/ # TODO: change optimizer to SGD with learning rate schedule 
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+
 def VGG_model():
     base_model = keras.applications.VGG16(
     weights='imagenet',  # Load weights pre-trained on ImageNet.
-    input_shape=(256, 256, 3),
+    input_shape=(224, 224, 3),
     include_top=False)  # Do not include the ImageNet classifier at the top.
 
     base_model.trainable = False
 
-    inputs = keras.Input((256, 256, 3))
+    inputs = keras.Input((224, 224, 3))
 
     # base model running in inference mode
     x = base_model(inputs, training=False)
@@ -44,12 +45,12 @@ def start_procedure(train_data, validation_data):
 
     print("---------------Start fit (training)--------------------")
     model.fit(train_data, validation_data=validation_data, epochs=20)
-    model.save_weights(filepath="./model_weights/VGG/")
-    model.save(filepath = Path("./models/VGG/"), overwrite=True)
+    model.save_weights(filepath="../model_weights/VGG/")
+    model.save(filepath = Path("../models/VGG/"), overwrite=True)
 
     print("---------------Start fine-tuning--------------------")
     # load model from path, comment out if not needed
-    model = keras.models.load_model(filepath = Path("./models/VGG/"))
+    model = keras.models.load_model(filepath = Path("../models/VGG/"))
     
     model.trainable = True
     
@@ -58,5 +59,5 @@ def start_procedure(train_data, validation_data):
               metrics=[keras.metrics.BinaryAccuracy()])
     
     model.fit(train_data, validation_data=validation_data, epochs=10)
-    model.save_weights(filepath="./model_weights/VGG/")
-    model.save(filepath = Path("./models/VGG/"), overwrite=False)
+    model.save_weights(filepath="../model_weights/VGG/")
+    model.save(filepath = Path("../models/VGG/"), overwrite=False)

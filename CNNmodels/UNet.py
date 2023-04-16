@@ -1,35 +1,38 @@
 from pathlib import Path
-from typing import List
 
-from keras import Input, Model
-from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback
+from keras import Input, Model, Sequential
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, concatenate, Rescaling, Flatten, Dense, Activation
 from keras.optimizers import Adam
-from keras.applications import *
-import matplotlib.pyplot as plt
-import numpy as np
-from image_load import split_input_label
-from keras import backend
-def thresholded_relu(theta):
-    def _thresholded_relu(x):
-        return backend.cast(backend.greater(x, theta), dtype='float32')
-    return _thresholded_relu
 
-def start_procedure(train_data, validation_data):
-    #model = get_U_Net_model()
-    model = Unet_model()
-    model.summary()
+from image_load import split_data
 
-    model.compile(optimizer="adam", loss="binary_crossentropy", metrics=['binary_accuracy'])
+
+def start_procedure(data, labels):
+    x, y, x_val, y_val, _, _ = split_data(data=data, label=labels)
+
+    model = Sequential([Unet_model(),  # original U-Net model
+                        Flatten(),  # flatten layer to 1d
+                        Dense(1, activation='sigmoid')  # add 1 fully connected layer to output node
+                        ])
+    # model.summary()
+
+    model.compile(optimizer=Adam(),
+                  loss="binary_crossentropy",
+                  metrics=["binary_accuracy"])
 
     print("---------------Start fit (training)--------------------")
-    model.fit(train_data, validation_data=validation_data, epochs=30)
-    model.save_weights(filepath="model_weights")
-    model.save(filepath=Path("brain_tumor_dataset"), overwrite=True)
+
+    result = model.fit(x=x, y=y,
+                       batch_size=32,
+                       epochs=100,
+                       validation_data=(x_val, y_val)
+                       )
+
+    model.save_weights(filepath="model_weights_unet")
+    model.save(filepath="saved_models/Unet", overwrite=True)
 
 
 def Unet_model():
-    thresholded_relu_activation  = Activation(thresholded_relu(0.5))
     def encode(input_layer, filters):
         """2 convolutions + 1 max pool (2x2)"""
         conv_1 = Conv2D(filters, 3, activation="relu", padding="same")(input_layer)
@@ -61,11 +64,6 @@ def Unet_model():
     d2 = decoder(d3, 128, e2)
     d1 = decoder(d2, 64, e1)
 
-    output = Conv2D(1, 1, activation='relu', name="output")(d1)
-    # segmentation_map = Conv2D(2, 3, activation="relu", padding="same")(d1)
-    # output = Conv2D(1, 1, activation="sigmoid")(segmentation_map)
-    x = Flatten()(output)  #added this myself, as
-    output = Dense(1, activation="sigmoid")(x)  # not sure if this is necessary however shape was not equal
+    output = Conv2D(1, 1, activation='sigmoid', name="output")(d1)
 
     return Model(inputs, output, name="U-Net")
-
